@@ -1,0 +1,69 @@
+{
+    "builders": [
+        {
+            "type": "vmware-iso",
+            "boot_command": [
+                "<tab><bs><bs><bs><bs><bs>text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg<enter><wait>"
+            ],
+            "boot_wait": "5s",
+            "vm_name": "",
+            "guest_os_type": "centos8-64",
+            "version": "19",
+            "cpus": "2",
+            "cores": "1",
+            "memory": "4096",
+            "disk_adapter_type": "pvscsi",
+            "disk_size": "40960",
+            "disk_type_id": "thin",
+            "network_adapter_type": "vmxnet3",
+            "network_name": "VM Network",
+            "vmx_data": {
+                "svga.autodetect": "true"
+            },
+            "iso_checksum": "",
+            "iso_url": "",
+            "shutdown_command": "sudo /sbin/halt -p",
+            "http_directory": "http",
+            "keep_registered": "true",
+            "skip_export": "true",
+            "insecure_connection": "true",
+            "vnc_over_websocket": "true",
+            "remote_datastore": "",
+            "remote_host": "",
+            "remote_password": "",
+            "remote_type": "esx5",
+            "remote_username": "",
+            "ssh_host": "",
+            "ssh_password": "",
+            "ssh_username": "",
+            "ssh_wait_timeout": "20m"
+        }
+    ],
+    "provisioners": [
+        {
+             "type": "shell",
+             "execute_command": "echo 'packer'|{{.Vars}} sudo -S -E bash '{{.Path}}'",
+             "inline": [
+                "dnf -y update",
+                "dnf -y install python3",
+                "alternatives --set python /usr/bin/python3",
+                "pip3 install ansible"
+            ]
+        },
+        {
+            "type": "ansible-local",
+            "playbook_file": "scripts/setup.yml",
+            "extra_arguments": [
+              "--extra-vars",
+              "\"setupdns=true\""
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "echo 'packer'|{{.Vars}} sudo -S -E bash '{{.Path}}'",
+            "scripts": [
+                "scripts/cleanup.sh"
+            ]
+        }
+    ]
+}

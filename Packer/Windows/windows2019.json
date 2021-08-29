@@ -1,0 +1,59 @@
+{
+  "builders": [
+    {
+        "type": "vsphere-iso",
+        "vcenter_server": "",
+        "username": "",
+        "password": "",
+        "insecure_connection": "true",
+        "datacenter": "",
+        "cluster": "",
+        "datastore": "",
+        "convert_to_template": "false",
+        "vm_name": "Windows Server 2019 Standard Korean Template",
+        "guest_os_type": "windows9Server64Guest",
+        "CPUs": "2",
+        "RAM": "4096",
+        "storage": [
+          {
+            "disk_size": "40960",
+            "disk_thin_provisioned": "true"
+          }
+        ],
+        "disk_controller_type": "pvscsi",
+        "network_adapters": [
+          {
+            "network": "Lab-Management",
+            "network_card": "vmxnet3"
+          }
+        ],
+        "iso_paths": [
+          "[vsanDatastore] ISO/ko_windows_server_2019_updated_oct_2020_x64_dvd_cb888e6e.iso",
+          "[] /vmimages/tools-isoimages/windows.iso"
+        ],
+        "floppy_files": [
+          "./Setup/"
+        ],
+        "floppy_img_path": "[] /vmimages/floppies/pvscsi-Windows8.flp",
+        "shutdown_command": "shutdown /s /t 5",
+        "communicator": "winrm",
+        "winrm_username": "",
+        "winrm_password": "",
+        "winrm_timeout": "1h30m"
+    }
+  ],
+  "provisioners": [
+    {
+      "elevated_user": "",
+      "elevated_password": "",
+      "scripts": [
+        "./Scripts/Invoke-SystemUpdate.ps1"
+      ],
+      "type": "powershell"
+    },
+    {
+      "type": "windows-shell",
+      "inline": ["ipconfig /all"]
+    }
+  ]
+}

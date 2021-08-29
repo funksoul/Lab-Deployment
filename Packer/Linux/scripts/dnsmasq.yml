@@ -1,0 +1,60 @@
+---
+- name: "dnsmasq.yml"
+  hosts: localhost
+  gather_facts: yes
+  become: yes
+  tasks:
+  - name: Install epel repo (RedHat)
+    dnf:
+      name: "epel-release"
+      state: latest
+    when: ansible_os_family == "RedHat"
+
+  - name: Upgrade all packages (RedHat)
+    dnf:
+      name: "*"
+      state: latest
+    when: ansible_os_family == "RedHat"
+
+  - name: Install packages (RedHat)
+    dnf:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+      packages:
+      - bash-completion
+    when: ansible_os_family == "RedHat"
+
+  - name: Install dnsmasq
+    dnf:
+      name: "dnsmasq"
+      state: latest
+    when: setupdns == "true"
+
+  - name: Ensure dnsmasq is running
+    ansible.builtin.systemd:
+      name: "dnsmasq"
+      enabled: yes
+      state: started
+    when: setupdns == "true"
+
+  - name: Permit traffic in default zone for DNS service
+    ansible.posix.firewalld:
+      service: dns
+      permanent: yes
+      state: enabled
+      immediate: yes
+    when: setupdns == "true"
+
+  - name: Add mappings to /etc/hosts
+    blockinfile:
+      path: /etc/hosts
+      block: |
+        192.168.10.9    dnsmasq.rainpole.lab
+        192.168.10.10   vc01.rainpole.lab
+        192.168.10.11   esxi01.rainpole.lab
+        192.168.10.12   esxi02.rainpole.lab
+        192.168.10.13   esxi03.rainpole.lab
+        192.168.10.21   haproxy01.rainpole.lab
+        192.168.10.41   vrops.rainpole.lab
+    when: setupdns == "true"

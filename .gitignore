@@ -1,0 +1,7 @@
+license_keys.txt
+ISOs/
+OVAs/
+TMP/
+Packer/Linux/packer_cache/
+Packer/Windows/install.wim
+Packer/packer.exe
