@@ -2159,31 +2159,25 @@ $CmdletParams = @{
     head = $head
     body = @"
 {
-  "display_name" : "nsxmgr.rainpole.lab",
-  "subject":
-  {
-    "attributes":
-    [
-      {"key":"CN","value":"nsxmgr.rainpole.lab"},
-      {"key":"O","value":"VMware Inc."},
-      {"key":"OU","value":"NSX"},
-      {"key":"C","value":"US"},
-      {"key":"ST","value":"CA"},
-      {"key":"L","value":"Palo Alto"}
+  "display_name": "nsxmgr.rainpole.lab",
+  "subject": {
+    "attributes": [
+      {"key": "CN", "value": "nsxmgr.rainpole.lab"},
+      {"key": "O", "value": "VMware Inc."},
+      {"key": "OU", "value": "NSX"},
+      {"key": "C", "value": "US"},
+      {"key": "ST", "value": "CA"},
+      {"key": "L", "value": "Palo Alto"}
     ]
   },
   "key_size": "2048",
   "algorithm": "RSA",
-  "extensions":
-  {
-    "subject_alt_names":
-    {
-      "dns_names":
-      [
+  "extensions": {
+    "subject_alt_names": {
+      "dns_names": [
         "nsxmgr.rainpole.lab"
       ],
-      "ip_addresses":
-      [
+      "ip_addresses": [
           "192.168.10.50"
       ]
     }
@@ -2208,5 +2202,50 @@ $CmdletParams = @{
     Uri = "https://$($VMDeploymentConfig.NSXManager.nsx_hostname)/api/v1/cluster/api-certificate?action=set_cluster_certificate&certificate_id=$($CertificateId)"
     Method = "POST"
     head = $head
+}
+$Result = Invoke-WebRequest @CmdletParams
+
+# Retrieve the host switch name from the transport zones
+$CmdletParams = @{
+    Uri = "https://$($VMDeploymentConfig.NSXManager.nsx_hostname)/api/v1/transport-zones"
+    Method = "GET"
+    head = $head
+}
+$Result = Invoke-WebRequest @CmdletParams
+
+# Create TEP IP Pool
+$IPPoolName = "TEP-IP-POOL"
+$CmdletParams = @{
+    Uri = "https://$($VMDeploymentConfig.NSXManager.nsx_hostname)/policy/api/v1/infra/ip-pools/$($IPPoolName)"
+    Method = "PATCH"
+    head = $head
+    body = @"
+{
+  "display_name": "$($IPPoolName)",
+  "description": "$($IPPoolName)"
+}
+"@
+}
+$Result = Invoke-WebRequest @CmdletParams
+
+# Add a new IP Subnet to the TEP IP Pool (An IP Subnet cannot be created with an IP Pool, need to be created separately)
+$IPSubnetName = "TEP-IP-POOL-IP-SUBNET"
+$CmdletParams = @{
+    Uri = "https://$($VMDeploymentConfig.NSXManager.nsx_hostname)/policy/api/v1/infra/ip-pools/$($IPPoolName)/ip-subnets/$($IPSubnetName)"
+    Method = "PATCH"
+    head = $head
+    body = @"
+{
+  "display_name": "$($IPSubnetName)",
+  "resource_type": "IpAddressPoolStaticSubnet",
+  "cidr": "192.168.40.0/24",
+  "allocation_ranges": [
+    {
+      "start": "192.168.40.11",
+      "end": "192.168.40.20"
+    }
+  ]
+}
+"@
 }
 $Result = Invoke-WebRequest @CmdletParams
